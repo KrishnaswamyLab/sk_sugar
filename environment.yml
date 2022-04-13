@@ -1,0 +1,33 @@
+name: sklab-sugar
+dependencies:
+  # Core Utils
+  - pandas
+  - numpy
+  - scipy
+  - scikit-learn
+
+  # Scripting
+  - tqdm
+  - argparse
+
+  # Plotting
+  - matplotlib
+  - seaborn
+  
+  # Krishnaswamy's Software
+  - phate
+  - scprep
+  - graphtools
+  
+  # Jupyter / Interactive Python related
+  - ipykernel # needed for auto-detection by `nb_conda_kernels`
+  - ipython
+  - ipywidgets
+  # - jupyterlab
+  # - jupyter_contrib_nbextensions
+  # - nb_conda_kernels
+
+channels:
+  - conda-forge
+  - pytorch
+  - bioconda
