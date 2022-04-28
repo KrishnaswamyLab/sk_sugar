@@ -2,7 +2,23 @@
 
 __all__ = ["index", "modules", "custom_doc_links", "git_url"]
 
-index = {"foo": "00_core.ipynb"}
+index = {"__file": "00_core.ipynb",
+         "ROOT_DIR": "00_core.ipynb",
+         "LOG_FILE": "00_core.ipynb",
+         "basename": "00_core.ipynb",
+         "logger": "00_core.ipynb",
+         "validate_sigma": "00_core.ipynb",
+         "VALID_SIGMAS": "00_core.ipynb",
+         "SigmaType": "00_core.ipynb",
+         "gauss_kernel": "00_core.ipynb",
+         "degrees": "00_core.ipynb",
+         "local_covariance": "00_core.ipynb",
+         "feature_scale": "00_core.ipynb",
+         "numpts": "00_core.ipynb",
+         "generate": "00_core.ipynb",
+         "magic": "00_core.ipynb",
+         "mgc_magic": "00_core.ipynb",
+         "sugar": "00_core.ipynb"}
 
 modules = ["core.py"]
 
