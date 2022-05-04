@@ -18,7 +18,9 @@ index = {"__file": "00_core.ipynb",
          "generate": "00_core.ipynb",
          "magic": "00_core.ipynb",
          "mgc_magic": "00_core.ipynb",
-         "sugar": "00_core.ipynb"}
+         "sugar": "00_core.ipynb",
+         "generate_imbalanced_circle": "00_core.ipynb",
+         "pnts": "00_core.ipynb"}
 
 modules = ["core.py"]
 

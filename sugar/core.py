@@ -2,7 +2,7 @@
 
 __all__ = ['__file', 'ROOT_DIR', 'LOG_FILE', 'basename', 'logger', 'validate_sigma', 'VALID_SIGMAS', 'SigmaType',
            'gauss_kernel', 'degrees', 'local_covariance', 'feature_scale', 'numpts', 'generate', 'magic', 'mgc_magic',
-           'sugar']
+           'sugar', 'generate_imbalanced_circle', 'pnts']
 
 # Internal Cell
 import os, inspect, datetime, logging, numpy as np, pandas as pd, scipy as sp
@@ -358,7 +358,7 @@ def numpts(
                     sig = kernel_sigma
                 number_estimate[i] = (const - degree[i]) * np.apply_along_axis(
                     np.power, 0,
-                    np.linalg.det(
+                    np.linalg.det( # NOTE: <--- this will be a scalar
                         np.eye(noise_cov[i].shape) + \
                             np.apply_over_axes(np.divide, 0, noise_cov[i], (2 * np.power(sig, 2)))
                     ),
@@ -440,6 +440,7 @@ def generate(
     labels_out = []
 
     if isinstance(noise_cov, (float, int)): # constant cov, no need to replicate cov.
+        if logger: logger.info('Constant covariance, no need to replicate covariance')
         for i, row in enumerate(data):
             # replicate data[i] to make npts[i] centers for mvnrnd
             new_center = np.tile(row.T, (npts[i]))
@@ -467,7 +468,7 @@ def generate(
 
             if npts[i] != 0:
                 # replicate the covariance matrix
-                rep_cov.append(np.tile(noise_cov[i], (1, 1, npts[i])))
+                rep_cov.append(np.tile(noise_cov[i], (npts[i])))
 
                 # if i == 0:
                 #     rep_cov = np.tile(noise_cov[i], (1, 1, npts[i]))
@@ -483,8 +484,10 @@ def generate(
         rep_cov = np.array(rep_cov).reshape(-1, *noise_cov.shape)[0]
         rep_centers = np.array(rep_centers)
 
+
         random_points = []
-        for i, row in enumerate(rep_centers.T):
+        # for i, row in enumerate(rep_centers.T):
+        for i, row in enumerate(rep_centers):
             random_points.append(
                 np.random.multivariate_normal(row, rep_cov[i])
             )
@@ -539,27 +542,28 @@ def magic(
 
         diffusion_operator (np.ndarray): M x M Markov matrix built from kernel.
     '''
-    if (
-        data.shape[0] != kernel.shape[0] and
-        data.shape[1] != kernel.shape[0]
-    ):
-        if logger: logger.warning('Data does not match kernel size')
+    if data.shape[0] != kernel.shape[0]:
+        if data.shape[1] != kernel.shape[0]:
+            if logger: logger.warning('Data does not match kernel size')
+        else:
+            data = data.T
     else:
-        data = data.T
-
+        pass
     # build diffusion operator
     diffusion_degree = np.diag(
         np.sum(kernel, axis=1) ** -1
     )
     diffusion_degree[np.isinf(diffusion_degree)] = 0
-    diffusion_operator = diffusion_degree * kernel
+    diffusion_operator = diffusion_degree @ kernel
 
     data_imputed = data
 
     for i in range(t):
-        data_imputed = diffusion_operator * data_imputed
+        # data_imputed = diffusion_operator * data_imputed
+        data_imputed = diffusion_operator @ data_imputed
 
     if rescale:
+        # NOTE: Heuristic by David to fix vanishing norm when multiplying by diffusion operator
         data_imputed = np.multiply(
             data_imputed,
             np.divide(
@@ -645,19 +649,18 @@ def mgc_magic(
     if t == 0:
         new_data = Y
         if logger: logger.warning('mgc_magic was passed t=0, no mgc_magic was performed')
-    new_to_old, sigma_nto = gauss_kernel(X, Y, sigma, a, k, fac)
+    new_to_old, sigma_nto = gauss_kernel(Y, X, sigma, a, k, fac)
     old_to_new, sigma_otn = gauss_kernel(X, Y, sigma, a, k, fac)
 
-    new_to_old_sparsity = []
-    for i, row in enumerate(new_to_old):
-        new_to_old_sparsity.append(np.multiply(row, s_hat[i]))
 
-    new_to_old_sparsity = np.array(new_to_old_sparsity)
-    # new_to_old_sparsity = np.apply_along_axis(
-    #     np.multiply, 0,
-    #     new_to_old, s_hat
-    # )
-    mgc_kernel = new_to_old_sparsity * old_to_new
+    new_to_old_sparsity = []
+    new_to_old_sparsity = np.multiply(new_to_old, s_hat)
+    # new_to_old_sparsity = np.matmul(new_to_old, s_hat)
+
+
+    # NOTE: from matlab this is matrix multiply
+    # mgc_kernel = new_to_old_sparsity * old_to_new
+    mgc_kernel = new_to_old_sparsity @ old_to_new
     mgc_kernel = np.divide( (mgc_kernel + mgc_kernel.T) , 2)
     new_data, mgc_diffusion_operator = magic(Y, mgc_kernel, t, magic_rescale)
     return new_data, mgc_kernel, mgc_diffusion_operator
@@ -841,6 +844,7 @@ def sugar(
     if logger: logger.info('Generating points')
     random_points, out_labels = generate(data, npts, noise_cov, labels)
 
+
     if mgc_t > 0:
         if logger: logger.info('Diffusing points via MGC Magic')
         Y, mgc_kernel, mgc_diffusion_operator = mgc_magic(
@@ -851,9 +855,47 @@ def sugar(
             logger=logger
         )
         pass
+    # NOTE: (@Jay) assumed that this was there for debugging purposes
     else:
         Y = random_points
         mgc_kernel = []
         mgc_diffusion_operator = []
 
     return Y, out_labels, d_hat, s_hat, sigma, noise, npts, random_points, mgc_kernel, mgc_diffusion_operator
+
+# Cell
+import random
+import numpy as np
+import matplotlib.pyplot as plt
+def generate_imbalanced_circle(
+    n_points:int=100, n_total:int=10000,
+    weight:float=1.2
+) -> np.ndarray:
+    '''
+    Arugments:
+    ----------
+        n_points (int): number of points to sample from unit circle. Defaults to `100`.
+
+        n_total (int): number of points to generate uniformly on the unit circle. Defaults ot `10000`.
+
+        weight (float): weight modifier for how much to emphasize the x coordinate on the unit circle.
+            Defaults to `1.2`. Setting this to `1` results in almost no points on the lefthand side of
+            the circle. Setting it to `2` results in a more uniform balance.
+
+    Returns:
+    ----------
+        points (np.ndarray): 2 X `n_points` array of the points on the unit circle.
+    '''
+    theta = np.concatenate((np.linspace(-np.pi, np.pi, n_total), ))
+    a, b = 1 * np.cos(theta), 1 * np.sin(theta)
+    coords = np.vstack((a, b)).T
+    pnts = coords[
+        random.choices(
+            np.arange(0, coords.shape[0]),
+            weights=weight+coords[:, 0].reshape(-1),
+            k=n_points)
+    ]
+    return pnts
+
+pnts = generate_imbalanced_circle()
+plt.scatter(pnts[:, 0], pnts[:, 1])
