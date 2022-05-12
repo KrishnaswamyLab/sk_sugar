@@ -154,7 +154,6 @@ def gauss_kernel(
     # NOTE: validated with points.csv
     elif sigma == 'knn':
         knn_dist = np.sort(D, axis=0, kind='mergesort')
-        # print(np.round(knn_dist[:5, :5], 4), knn_dist.shape)
         # sigma = knn_dist(k+1,:);
         sigma = knn_dist[k, :]
 
@@ -168,9 +167,9 @@ def gauss_kernel(
     else:
         pass
     sigma = sigma * fac
+
     # K = bsxfun(@rdivide, D, sigma);
-    K = np.divide(D, sigma)#
-    # K = np.apply_along_axis(np.divide, 0, D, sigma)
+    K = np.divide(D, sigma) # K = np.apply_along_axis(np.divide, 0, D, sigma)
     K = np.exp(-np.power(K, a))
 
     K[np.isnan(K)] = 0
@@ -375,15 +374,7 @@ def numpts(
                     sig = kernel_sigma[i]
                 else:
                     sig = kernel_sigma
-                # number_estimate[i] = (const - degree[i]) * np.apply_along_axis(
-                #     np.power, 0,
-                #     np.linalg.det( # NOTE: <--- this will be a scalar
-                #         np.eye(*noise_cov[i].shape) + \
-                #             # np.apply_along_axis(np.divide, 0, noise_cov[i], (2 * np.power(sig, 2)))
-                #             np.divide(noise_cov[i], (2 * np.power(sig, 2)))
-                #     ),
-                #     0.5
-                # )
+
                 number_estimate[i] = (const - degree[i]) * np.power(
                     np.linalg.det(
                         np.eye(*noise_cov[i].shape) + np.divide(noise_cov[i], (2 * np.power(sig, 2)))
@@ -490,8 +481,6 @@ def generate(
         for i, row in enumerate(data):
             # replicate centers npts[i] times
             new_center = np.tile(row.reshape(-1, 1), (1, npts[i]))
-            # new_center = np.matlib.repmat(row.reshape(-1, 1), 1, npts[i])
-            # print(i, new_center, 'new center')
             if labels:
                 new_labels = np.tile(labels[i], (npts[i]))
                 labels_out = [labels_out, new_labels]
@@ -502,43 +491,21 @@ def generate(
 
             if npts[i] != 0:
                 # replicate the covariance matrix
-                tmp = np.tile(noise_cov[i], (npts[i])).reshape(-1, *noise_cov[i].shape)
-                # print(i, tmp, 'tmp')
-                rep_cov.append(tmp)
-                # print(np.hstack(rep_cov).reshape(-1, *noise_cov[i].shape))
-                # if i == 0:
-                #     rep_cov = np.tile(noise_cov[i], (1, 1, npts[i]))
-                # else:
-                #     rep_cov = np.concatenate(
-                #         (
-                #             rep_cov,
-                #             np.tile(noise_cov[i], (1, 1, npts[i]))
-                #         ),
-                #         axis=2
-                #     )
+                cov = np.tile(noise_cov[i], (npts[i])).reshape(-1, *noise_cov[i].shape)
+                rep_cov.append(cov)
 
-        # rep_cov = np.array(rep_cov, dtype=object).reshape(-1, *noise_cov.shape)[0]
+
         rep_cov = np.vstack(rep_cov)
         rep_centers = np.hstack(rep_centers)
 
 
         random_points = []
 
-        # for i, row in enumerate(rep_centers.T):
         for i, row in enumerate(rep_centers.T):
             random_points.append(
                 np.random.multivariate_normal(row, rep_cov[i])
             )
-        # random_points = np.apply_along_axis(
-        #     np.random.multivariate_normal, 0,
-        #     np.array(rep_centers, dtype=object).T, rep_cov
-        # )
-        # random_points = np.random.multivariate_normal(
-        #     np.array(rep_centers, dtype=object).T, rep_cov
-        # )
-        # random_points = np.random.Generator.multivariate_normal(
-        #     np.array(rep_centers, dtype=object).T, rep_cov
-        # )
+
         random_points = np.array(random_points)
     return random_points, labels_out
 
@@ -622,14 +589,12 @@ def magic(
     )
     diffusion_degree[np.isinf(diffusion_degree)] = 0
     diffusion_operator = diffusion_degree @ kernel
-    # print(np.round(diffusion_operator, 10)[:8, :8])
 
     data_imputed = data
 
     for i in range(t):
         # data_imputed = diffusion_operator * data_imputed
         data_imputed = diffusion_operator @ data_imputed
-    # print(data_imputed[:5, :5])
 
 
     if rescale:
@@ -721,17 +686,16 @@ def mgc_magic(
         if logger: logger.warning('mgc_magic was passed t=0, no mgc_magic was performed')
     new_to_old, sigma_nto = gauss_kernel(Y, X, sigma, k, a, fac)
     old_to_new, sigma_otn = gauss_kernel(X, Y, sigma, k, a, fac)
-    # print(old_to_new[:5, :5])
+
     new_to_old_sparsity = []
     new_to_old_sparsity = np.multiply(new_to_old, s_hat)
     # new_to_old_sparsity = np.matmul(new_to_old, s_hat)
-    # print(np.round(new_to_old_sparsity[:5, :5].astype(float), 4))
 
     # NOTE: from matlab this is matrix multiply
     # mgc_kernel = new_to_old_sparsity * old_to_new
     mgc_kernel = new_to_old_sparsity @ old_to_new
     mgc_kernel = np.divide( (mgc_kernel + mgc_kernel.T) , 2)
-    # print(np.round(mgc_kernel[:5, :5], 4))
+
     new_data, mgc_diffusion_operator = magic(Y, mgc_kernel, t, magic_rescale)
     return new_data, mgc_kernel, mgc_diffusion_operator
 
