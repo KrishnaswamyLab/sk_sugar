@@ -27,6 +27,6 @@ modules = ["core.py"]
 
 doc_url = "https://dsm-72.github.io/sugar/"
 
-git_url = "https://github.com/dsm-72/sugar/tree/main/"
+git_url = "https://github.com/dsm-72/sugar/"
 
 def custom_doc_links(name): return None

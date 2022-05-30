@@ -1,11 +1,11 @@
 # SUGAR
-> Python version of [sugar]
+> Python version of [sugar][sugar]
 
 
 
 ## Install
 
-`pip install sugar`
+`pip install sk-sugar`
 
 # Setup
 
