@@ -25,8 +25,8 @@ index = {"__file": "00_core.ipynb",
 
 modules = ["core.py"]
 
-doc_url = "https://dsm-72.github.io/sugar/"
+doc_url = "https://KrishnaswamyLab.github.io/sk_sugar/"
 
-git_url = "https://github.com/dsm-72/sugar/"
+git_url = "https://github.com/KrishnaswamyLab/sk_sugar/"
 
 def custom_doc_links(name): return None
