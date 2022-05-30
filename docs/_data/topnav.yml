@@ -2,8 +2,8 @@ topnav:
 - title: Topnav
   items:
     - title: github
-      external_url: https://github.com/dsm-72/sugarr/tree/main/
-
+      external_url: https://github.com/krishnaswamylab/sk_sugar/
+      
 #Topnav dropdowns
 topnav_dropdowns:
 - title: Topnav dropdowns
