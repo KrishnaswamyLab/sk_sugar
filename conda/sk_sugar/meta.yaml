@@ -1,9 +1,9 @@
 package:
   name: sk_sugar
-  version: 0.0.4
+  version: 0.0.5
 source:
-  sha256: da7232ac176d1199e176676b53f76f3bffadb44ac2e2ef45f624d0abcf8b244c
-  url: https://files.pythonhosted.org/packages/f3/3c/43380d7b90c6dc8ab11e7e8e32448f64c4d3e68ebaf14da0b1a3bae515d1/sk_sugar-0.0.4.tar.gz
+  sha256: d8d0d2697bf8c2d79f4a7e79a5198fb4fa2caf8dc7278f5823562cc96d87d49c
+  url: https://files.pythonhosted.org/packages/4a/9d/640b10539cdb9964727b742364ec29717ee0d13870e7cd84d87b94df8d3f/sk_sugar-0.0.5.tar.gz
 about:
   dev_url: https://KrishnaswamyLab.github.io
   doc_url: https://KrishnaswamyLab.github.io

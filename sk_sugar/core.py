@@ -251,6 +251,7 @@ def degrees(
 def local_covariance(
     data:np.ndarray,
     k:int=5,
+    n_jobs=-1,
     logger:Optional[logging.Logger]=None
 ) -> np.ndarray:
     '''
@@ -271,6 +272,8 @@ def local_covariance(
 
         k (int): K-nearest neighbor distance to use if `sigma="knn"`. Defaults to `5`.
 
+        n_jobs (int): Number of cores to use. Defaults to `-1` (all but one core).
+
         logger (logging.Logger): The logger to which to log to. Defaults to `None`.
 
     Returns:
@@ -279,7 +282,7 @@ def local_covariance(
             generated noise.
     '''
     local_cov = []
-    neigh = NearestNeighbors(n_neighbors=k)
+    neigh = NearestNeighbors(n_neighbors=k, n_jobs=n_jobs)
     neigh.fit(data)
     for row in data:
         idx = neigh.kneighbors(row.reshape(1, -1), return_distance=False)
@@ -719,6 +722,7 @@ def sugar(
     mgc_fac:int=1,
     magic_rescale:bool=1,
     suppress:bool=False,
+    n_jobs:int=-1,
     logger:Optional[logging.Logger]=None
 ) -> Tuple[
     np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray,
@@ -822,6 +826,8 @@ def sugar(
         suppress (bool): Enabled / disable point generation errors. Defaults to `False`.
             Deprecated.
 
+        n_jobs (int): Number of cores to use. Defaults to `-1` (all but one core)/
+
         logger (logging.Logger): The logger to which to log to. Defaults to `None`.
 
     Returns:
@@ -866,7 +872,7 @@ def sugar(
 
     if noise_cov == 'knn':
         if logger: logger.info('Local Covariance estimation')
-        noise = local_covariance(data, noise_k)
+        noise = local_covariance(data, noise_k, n_jobs=n_jobs)
         noise_cov = noise
 
     if logger: logger.info('Estimating number of points to generate')
