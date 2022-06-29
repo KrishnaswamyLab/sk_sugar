@@ -1,0 +1,32 @@
+package:
+  name: sk_sugar
+  version: 0.0.4
+source:
+  sha256: da7232ac176d1199e176676b53f76f3bffadb44ac2e2ef45f624d0abcf8b244c
+  url: https://files.pythonhosted.org/packages/f3/3c/43380d7b90c6dc8ab11e7e8e32448f64c4d3e68ebaf14da0b1a3bae515d1/sk_sugar-0.0.4.tar.gz
+about:
+  dev_url: https://KrishnaswamyLab.github.io
+  doc_url: https://KrishnaswamyLab.github.io
+  home: https://KrishnaswamyLab.github.io
+  license: Apache Software
+  license_family: APACHE
+  summary: Python version of SUGAR
+build:
+  noarch: python
+  number: '0'
+  script: '{{ PYTHON }} -m pip install . -vv'
+extra:
+  recipe-maintainers:
+  - dsm-72
+requirements:
+  host:
+  - pip
+  - python
+  - packaging
+  run:
+  - pip
+  - python
+  - packaging
+test:
+  imports:
+  - sk_sugar

@@ -2,7 +2,7 @@
 
 __all__ = ['__file', 'ROOT_DIR', 'LOG_FILE', 'basename', 'logger', 'validate_sigma', 'VALID_SIGMAS', 'SigmaType',
            'gauss_kernel', 'degrees', 'local_covariance', 'feature_scale', 'numpts', 'generate', 'matlab_percentile',
-           'magic', 'mgc_magic', 'sugar', 'generate_imbalanced_circle', 'pnts']
+           'magic', 'mgc_magic', 'sugar', 'generate_imbalanced_circle']
 
 # Internal Cell
 import os, inspect, datetime, logging, numpy as np, pandas as pd, scipy as sp
@@ -866,7 +866,6 @@ def sugar(
 
     if noise_cov == 'knn':
         if logger: logger.info('Local Covariance estimation')
-        print(data, noise_k)
         noise = local_covariance(data, noise_k)
         noise_cov = noise
 
@@ -930,6 +929,3 @@ def generate_imbalanced_circle(
             k=n_points)
     ]
     return pnts
-
-pnts = generate_imbalanced_circle()
-plt.scatter(pnts[:, 0], pnts[:, 1])
