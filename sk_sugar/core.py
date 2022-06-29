@@ -12,6 +12,7 @@ from typing import Union, Optional, Tuple, Literal, TypeVar
 from collections.abc import Callable
 from sklearn.neighbors import NearestNeighbors, KNeighborsClassifier
 import numpy.matlib
+from numba import jit
 
 
 # Cell
@@ -37,6 +38,7 @@ logging.basicConfig(
 # Cell
 VALID_SIGMAS = 'minmax median std knn'.split()
 SigmaType = TypeVar('SigmaType', Literal["minimax", "median", "std", "knn"], Callable, float, int)
+@jit(parallel=True, forceobj=True)
 def validate_sigma(
     sigma:SigmaType,
     logger:Optional[logging.Logger]=None
@@ -75,6 +77,7 @@ def validate_sigma(
         raise ValueError(message)
 
 # Cell
+@jit(parallel=True, forceobj=True)
 def gauss_kernel(
     data1:np.ndarray,
     data2:np.ndarray,
@@ -181,6 +184,7 @@ def gauss_kernel(
     return K, sigma
 
 # Cell
+@jit(parallel=True, forceobj=True)
 def degrees(
     data:np.ndarray,
     sigma:SigmaType='std',
@@ -248,6 +252,7 @@ def degrees(
     return d_hat, s_hat, sigma
 
 # Cell
+@jit(parallel=True, forceobj=True)
 def local_covariance(
     data:np.ndarray,
     k:int=5,
@@ -291,11 +296,13 @@ def local_covariance(
     return np.array(local_cov)
 
 # Cell
+@jit(parallel=True, forceobj=True)
 def feature_scale(x:np.ndarray)->np.ndarray:
     fp = np.divide((x - np.min(x)), np.max(x) - np.min(x))
     return fp
 
 # Cell
+@jit(parallel=True, forceobj=True)
 def numpts(
     degree:np.ndarray,
     noise_cov:Union[int, float, np.ndarray]=1,
@@ -422,6 +429,7 @@ def numpts(
     return npts
 
 # Cell
+@jit(parallel=True, forceobj=True)
 def generate(
     data:np.ndarray,
     npts:np.ndarray,
@@ -481,12 +489,15 @@ def generate(
         )
 
     else:
+
         for i, row in enumerate(data):
+
             # replicate centers npts[i] times
             new_center = np.tile(row.reshape(-1, 1), (1, npts[i]))
             if labels:
                 new_labels = np.tile(labels[i], (npts[i]))
                 labels_out = [labels_out, new_labels]
+
 
             # rep_centers = [rep_centers, new_center]
             if np.size(new_center):
@@ -498,8 +509,9 @@ def generate(
                 rep_cov.append(cov)
 
 
-        rep_cov = np.vstack(rep_cov)
-        rep_centers = np.hstack(rep_centers)
+        if rep_cov:
+            rep_cov = np.vstack(rep_cov)
+            rep_centers = np.hstack(rep_centers)
 
 
         random_points = []
@@ -514,6 +526,7 @@ def generate(
 
 
 # Cell
+@jit(parallel=True, forceobj=True)
 def matlab_percentile(in_data, percentiles):
     """
     Calculate percentiles in the way IDL and Matlab do it.
@@ -543,6 +556,7 @@ def matlab_percentile(in_data, percentiles):
     return perc
 
 # Cell
+@jit(parallel=True, forceobj=True)
 def magic(
     data:np.ndarray,
     kernel:np.ndarray,
@@ -612,6 +626,7 @@ def magic(
     return data_imputed, diffusion_operator
 
 # Cell
+@jit(parallel=True, forceobj=True)
 def mgc_magic(
     X:np.ndarray,
     Y:np.ndarray,
@@ -703,6 +718,7 @@ def mgc_magic(
     return new_data, mgc_kernel, mgc_diffusion_operator
 
 # Cell
+@jit(parallel=True, forceobj=True)
 def sugar(
     data:np.ndarray,
     labels:list=[],
@@ -906,6 +922,8 @@ def sugar(
 import random
 import numpy as np
 import matplotlib.pyplot as plt
+
+# @jit(parallel=True, forceobj=True)
 def generate_imbalanced_circle(
     n_points:int=100, n_total:int=10000,
     weight:float=1.2
